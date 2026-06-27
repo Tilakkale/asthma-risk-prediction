@@ -67,6 +67,3 @@ python models\evaluate_model.py
 
 If `models/best_asthma_model.pkl` is missing, run `models/train_model.py` first.
 
-## Recommended GitHub repository description
-
-Asthma prediction pipeline with SMOTE-based training, clinical feature engineering, and model evaluation on a held-out test split.
