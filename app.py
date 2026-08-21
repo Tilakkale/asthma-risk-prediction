@@ -201,6 +201,31 @@ def load_evaluation_results() -> dict:
         return {}
 
 
+def render_validation_status(results: dict) -> None:
+    validation = results.get("validation_status", {})
+    quality_gate_passed = bool(validation.get("quality_gate_passed", False))
+    external_validation = bool(validation.get("external_validation", False))
+    is_validated = quality_gate_passed and external_validation
+    if is_validated:
+        label = "VALIDATED"
+        color = "#166534"
+        background = "#f0fdf4"
+        border = "#86efac"
+        detail = "Quality gate and external validation have passed."
+    else:
+        label = "NOT VALIDATED"
+        color = "#991b1b"
+        background = "#fef2f2"
+        border = "#fca5a5"
+        detail = "Quality gate or external validation is incomplete. Results are research-only."
+    st.markdown(
+        f"<div style='background:{background};border:1px solid {border};border-radius:10px;padding:10px 14px;margin:0 0 16px'>"
+        f"<strong style='color:{color}'>Research validation status: {label}</strong>"
+        f"<span style='color:{color};margin-left:10px;font-size:12px'>{detail}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+
 def render_research_results(results: dict) -> None:
     with st.expander("Research evaluation", expanded=False):
         if not results:
@@ -651,6 +676,7 @@ def main() -> None:
     aqi_df = load_aqi()
     evaluation_results = load_evaluation_results()
     st.markdown("<div class='hero'><div class='h-title'>Asthma Risk Analysis</div><div class='h-sub'>Analyze patient health inputs, estimate asthma risk, and review the clinical factors contributing to the prediction.</div></div>", unsafe_allow_html=True)
+    render_validation_status(evaluation_results)
     if model is None or preprocessor is None:
         st.error("Model or preprocessor artefacts are missing. Run: python models/train_model.py")
         return
