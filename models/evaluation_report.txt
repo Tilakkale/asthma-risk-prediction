@@ -1,13 +1,21 @@
-Accuracy: 92.28%
-Positive precision: 16.67%
-Positive recall: 12.00%
-Positive F1: 13.95%
+Decision threshold: 0.22
+Quality gate passed: False
+Average precision: 7.18%
+ROC-AUC: 50.20%
+Accuracy: 88.31%
+Positive precision: 10.26%
+Positive recall: 16.00%
+Positive F1: 12.50%
+
+Confusion Matrix:
+TN=419  FP=35
+FN=21  TP=4
 
               precision    recall  f1-score   support
 
-           0       0.95      0.97      0.96       454
-           1       0.17      0.12      0.14        25
+           0       0.95      0.92      0.94       454
+           1       0.10      0.16      0.12        25
 
-    accuracy                           0.92       479
-   macro avg       0.56      0.54      0.55       479
-weighted avg       0.91      0.92      0.92       479
+    accuracy                           0.88       479
+   macro avg       0.53      0.54      0.53       479
+weighted avg       0.91      0.88      0.89       479

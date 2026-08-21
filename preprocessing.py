@@ -2,7 +2,41 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+
+MODEL_FEATURE_COLUMNS = [
+    "Age",
+    "Gender",
+    "Ethnicity",
+    "EducationLevel",
+    "BMI",
+    "Smoking",
+    "PhysicalActivity",
+    "DietQuality",
+    "SleepQuality",
+    "PollutionExposure",
+    "PollenExposure",
+    "DustExposure",
+    "PetAllergy",
+    "FamilyHistoryAsthma",
+    "HistoryOfAllergies",
+    "Eczema",
+    "HayFever",
+    "GastroesophagealReflux",
+    "LungFunctionFEV1",
+    "LungFunctionFVC",
+    "Wheezing",
+    "ShortnessOfBreath",
+    "ChestTightness",
+    "Coughing",
+    "NighttimeSymptoms",
+    "ExerciseInduced",
+    "FEV1_FVC_ratio",
+    "RespiratorySymptomScore",
+    "AllergyExposureScore",
+    "HighRiskHistory",
+    "BMI_category",
+    "PoorLifestyleRisk",
+]
 
 
 def compute_bmi_category(bmi: float) -> int:
@@ -55,18 +89,46 @@ def compute_poor_lifestyle_risk(df: pd.DataFrame) -> pd.Series:
 
 def standardize_gender(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    # Robust mapping for various string dtypes and casings
+    if "Gender" not in df.columns:
+        return df
+    # Accept the numeric 0/1 values used in the dataset as well as common
+    # string representations used by the Streamlit form.
     mapping = {"male": 1, "female": 0, "m": 1, "f": 0}
-    # convert to string, normalize case and whitespace, then map
-    df["Gender"] = df["Gender"].astype(str).str.strip().str.lower().map(mapping)
-    # any unmapped -> treat as 0 (female) as a safe default, then cast to int
-    df["Gender"] = df["Gender"].fillna(0).astype(int)
+    text_values = df["Gender"].astype(str).str.strip().str.lower().map(mapping)
+    numeric_values = pd.to_numeric(df["Gender"], errors="coerce")
+    df["Gender"] = text_values.fillna(numeric_values).fillna(0).astype(int).clip(0, 1)
     return df
 
 
 def add_derived_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    target = df["Diagnosis"].copy() if "Diagnosis" in df.columns else None
     df = standardize_gender(df)
+
+    required_columns = {
+        "BMI",
+        "LungFunctionFEV1",
+        "LungFunctionFVC",
+        "PhysicalActivity",
+        "DietQuality",
+        "SleepQuality",
+        "Wheezing",
+        "ShortnessOfBreath",
+        "ChestTightness",
+        "Coughing",
+        "NighttimeSymptoms",
+        "ExerciseInduced",
+        "PollutionExposure",
+        "PollenExposure",
+        "DustExposure",
+        "PetAllergy",
+        "FamilyHistoryAsthma",
+        "HistoryOfAllergies",
+        "Eczema",
+    }
+    missing_columns = sorted(required_columns.difference(df.columns))
+    if missing_columns:
+        raise ValueError(f"Missing required feature columns: {', '.join(missing_columns)}")
 
     df["FEV1_FVC_ratio"] = df["LungFunctionFEV1"] / df["LungFunctionFVC"].replace(0, np.nan)
     df["FEV1_FVC_ratio"] = df["FEV1_FVC_ratio"].fillna(0)
@@ -77,6 +139,9 @@ def add_derived_features(df: pd.DataFrame) -> pd.DataFrame:
     df["BMI_category"] = df["BMI"].apply(compute_bmi_category)
     df["PoorLifestyleRisk"] = compute_poor_lifestyle_risk(df)
 
+    df = df.reindex(columns=MODEL_FEATURE_COLUMNS, fill_value=0)
+    if target is not None:
+        df["Diagnosis"] = target.reset_index(drop=True)
     return df
 
 
@@ -105,6 +170,7 @@ def preprocess_input_data(raw_data: dict[str, object]) -> pd.DataFrame:
 
     df = add_derived_features(df)
     df = df.drop(columns=["PatientID", "DoctorInCharge"], errors="ignore")
+    df = df.reindex(columns=MODEL_FEATURE_COLUMNS, fill_value=0)
     return df
 
 
