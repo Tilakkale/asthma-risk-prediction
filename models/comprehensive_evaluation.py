@@ -400,8 +400,8 @@ print("─" * 70)
 
 feature_groups = {
     "Full (all features)": MODEL_FEATURE_COLUMNS,
-    "Clinical only": ["Age", "Gender", "Ethnicity", "EducationLevel", "BMI"],
-    "Clinical + Lifestyle": ["Age", "Gender", "Ethnicity", "EducationLevel", "BMI",
+    "Clinical only": ["Age", "Gender", "EducationLevel", "BMI"],
+    "Clinical + Lifestyle": ["Age", "Gender", "EducationLevel", "BMI",
                               "Smoking", "PhysicalActivity", "DietQuality", "SleepQuality"],
     "Without respiratory": [c for c in MODEL_FEATURE_COLUMNS if c not in (
         "Wheezing", "ShortnessOfBreath", "ChestTightness", "Coughing",

@@ -6,7 +6,6 @@ import pandas as pd
 MODEL_FEATURE_COLUMNS = [
     "Age",
     "Gender",
-    "Ethnicity",
     "EducationLevel",
     "BMI",
     "Smoking",

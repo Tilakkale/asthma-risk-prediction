@@ -49,7 +49,7 @@ The training script applies SMOTE to the scaled training data for each candidate
 
 | Group | Inputs |
 | --- | --- |
-| Demographic | Age, Gender, Ethnicity, EducationLevel, BMI |
+| Demographic | Age, Gender, EducationLevel, BMI |
 | Lifestyle | Smoking, PhysicalActivity, DietQuality, SleepQuality |
 | Environmental exposure | PollutionExposure, PollenExposure, DustExposure, PetAllergy |
 | Medical and allergy history | FamilyHistoryAsthma, HistoryOfAllergies, Eczema, HayFever, GastroesophagealReflux |

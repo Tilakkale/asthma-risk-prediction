@@ -33,7 +33,7 @@ RISK_CONFIG = {
 }
 
 INPUT_DEFAULTS = {
-    "age": 35, "bmi": 24.0, "gender": "Female", "ethnicity": 0,
+    "age": 35, "bmi": 24.0, "gender": "Female",
     "fev1": 2.5, "fvc": 3.2, "education": 0, "smoking": "No",
     "activity": 5, "diet": 6, "sleep": 7, "pollution": 3, "pollen": 2,
     "dust": 3, "pet": "No", "family_history": "No", "allergies": "No",
@@ -578,14 +578,14 @@ def build_inputs() -> tuple[dict, bool]:
         with c3:
             gender = st.selectbox("Gender", ["Female", "Male"], key="gender")
         with c4:
-            ethnicity = st.selectbox("Ethnicity (coded)", [0, 1, 2, 3], key="ethnicity")
+            education = st.selectbox("Education level", [0, 1, 2, 3], key="education")
         c5, c6, c7, c8 = st.columns(4)
         with c5:
             fev1 = st.number_input("FEV1 (litres)", 0.5, 8.0, 2.5, step=0.1, key="fev1")
         with c6:
             fvc = st.number_input("FVC (litres)", 0.5, 8.0, 3.2, step=0.1, key="fvc")
         with c7:
-            education = st.selectbox("Education level", [0, 1, 2, 3], key="education")
+            st.write("")
         with c8:
             smoking = yn("Smoking", "smoking", "Has the patient ever smoked?")
         c9, c10, c11, c12 = st.columns(4)
@@ -640,7 +640,7 @@ def build_inputs() -> tuple[dict, bool]:
         st.markdown(f"<div style='background:#f8fafc;border:1px solid #dbe7f3;border-radius:10px;padding:10px 16px'><span style='color:#64748b;font-size:12px'>FEV1 / FVC ratio — </span><span style='color:{rcol};font-weight:800;font-size:18px'>{ratio:.2f}</span><span style='color:#64748b;font-size:12px;margin-left:8px'>{('Normal (≥ 0.70)' if ratio >= 0.70 else 'Low — possible obstruction')}</span></div>", unsafe_allow_html=True)
         submitted = st.form_submit_button("Predict asthma risk", use_container_width=True)
     patient = {
-        "Age": int(age), "BMI": float(bmi), "Gender": 1 if gender == "Male" else 0, "Ethnicity": int(ethnicity), "EducationLevel": int(education), "Smoking": int(smoking), "PhysicalActivity": int(activity), "DietQuality": int(diet), "SleepQuality": int(sleep), "PollutionExposure": int(pollution), "PollenExposure": int(pollen), "DustExposure": int(dust), "PetAllergy": int(pet), "FamilyHistoryAsthma": int(family_history), "HistoryOfAllergies": int(allergies), "Eczema": int(eczema), "HayFever": int(hay_fever), "GastroesophagealReflux": int(reflux), "LungFunctionFEV1": float(fev1), "LungFunctionFVC": float(fvc), "Wheezing": int(wheezing), "ShortnessOfBreath": int(shortness), "ChestTightness": int(chest_tightness), "Coughing": int(coughing), "NighttimeSymptoms": int(nighttime), "ExerciseInduced": int(exercise_induced)
+        "Age": int(age), "BMI": float(bmi), "Gender": 1 if gender == "Male" else 0, "EducationLevel": int(education), "Smoking": int(smoking), "PhysicalActivity": int(activity), "DietQuality": int(diet), "SleepQuality": int(sleep), "PollutionExposure": int(pollution), "PollenExposure": int(pollen), "DustExposure": int(dust), "PetAllergy": int(pet), "FamilyHistoryAsthma": int(family_history), "HistoryOfAllergies": int(allergies), "Eczema": int(eczema), "HayFever": int(hay_fever), "GastroesophagealReflux": int(reflux), "LungFunctionFEV1": float(fev1), "LungFunctionFVC": float(fvc), "Wheezing": int(wheezing), "ShortnessOfBreath": int(shortness), "ChestTightness": int(chest_tightness), "Coughing": int(coughing), "NighttimeSymptoms": int(nighttime), "ExerciseInduced": int(exercise_induced)
     }
     return patient, submitted
 
