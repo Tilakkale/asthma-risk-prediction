@@ -224,6 +224,14 @@ def render_validation_status(results: dict) -> None:
         f"<span style='color:{color};margin-left:10px;font-size:12px'>{detail}</span></div>",
         unsafe_allow_html=True,
     )
+    if not is_validated:
+        with st.expander("Requirements before validation", expanded=False):
+            st.markdown(
+                "- Audit the `Diagnosis` labels and confirm that positive cases represent asthma.\n"
+                "- Evaluate on a representative independent external dataset.\n"
+                "- Meet the validation quality gate for ROC-AUC, PR-AUC, precision, recall, and calibration.\n"
+                "- Review subgroup performance and obtain qualified clinical review."
+            )
 
 
 def render_research_results(results: dict) -> None:
