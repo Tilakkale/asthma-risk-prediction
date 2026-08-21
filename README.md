@@ -178,8 +178,6 @@ Windows alternative:
 
 ## App preview and results
 
-![Streamlit app preview](docs/screenshots/app-dashboard.png)
-
 The current model evaluation is available in [`models/evaluation_report.txt`](models/evaluation_report.txt), with plots and detailed results in the `models/` directory.
 
 Run the application locally:
