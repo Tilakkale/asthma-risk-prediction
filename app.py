@@ -513,10 +513,10 @@ def shap_full_chart(model, X_df: pd.DataFrame):
     if len(vals) != len(X_df.columns):
         return {}, None
     shap_map = {col: float(v) for col, v in zip(X_df.columns, vals)}
-    df = (pd.DataFrame({"Feature": X_df.columns.tolist(), "SHAP": vals}).assign(abs_shap=lambda d: d["SHAP"].abs()).sort_values("abs_shap").tail(14))
+    df = (pd.DataFrame({"Feature": X_df.columns.tolist(), "SHAP": vals}).assign(abs_shap=lambda d: d["SHAP"].abs()).sort_values("abs_shap"))
     df["color"] = df["SHAP"].apply(lambda v: "#ef4444" if v > 0 else "#059669")
-    fig = go.Figure(go.Bar(x=df["SHAP"], y=df["Feature"], orientation="h", marker_color=df["color"].tolist(), text=df["SHAP"].apply(lambda v: f"{v:+.3f}"), textposition="outside"))
-    fig.update_layout(title=dict(text="Full feature contribution (SHAP)", font=dict(size=13, color="#0f172a")), xaxis=dict(title="SHAP value", gridcolor="#dbe7f3"), yaxis=dict(title=""), height=420, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="#334155", size=12), margin=dict(t=40, b=20, l=10, r=70))
+    fig = go.Figure(go.Bar(x=df["SHAP"], y=df["Feature"], orientation="h", marker_color=df["color"].tolist(), text=df["SHAP"].apply(lambda v: f"{v:+.3f}"), textposition="outside", cliponaxis=False))
+    fig.update_layout(title=dict(text="Full Feature Distribution (SHAP Contributions)", font=dict(size=16, color="#0f172a")), xaxis=dict(title="SHAP value", title_font=dict(color="#334155", size=12), tickfont=dict(color="#334155", size=11), gridcolor="#dbe7f3", zerolinecolor="#94a3b8"), yaxis=dict(title="", tickfont=dict(color="#334155", size=11), automargin=True), height=max(720, len(df) * 28), paper_bgcolor="#ffffff", plot_bgcolor="#ffffff", font=dict(color="#334155", size=12), margin=dict(t=55, b=45, l=180, r=90))
     return shap_map, fig
 
 
@@ -649,18 +649,8 @@ def main() -> None:
     model = load_model()
     preprocessor = load_preprocessor()
     aqi_df = load_aqi()
-    report = load_report()
     evaluation_results = load_evaluation_results()
-    st.markdown("<div class='hero'><div class='h-title'>Asthma Risk Analysis</div><div class='h-sub'>Explore a patient profile, review a model-estimated risk score, and inspect the factors behind it. This research prototype supports discussion with a qualified clinician; it does not diagnose asthma or replace urgent care.</div><span class='h-chip'>Research prototype</span><span class='h-chip'>No patient data is stored</span></div>", unsafe_allow_html=True)
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown(f"<div class='kpi-card'><div class='k-label'>Model Status</div><div class='k-value' style='color:{'#34d399' if model is not None else '#ef4444'}'>{ 'Ready' if model is not None else 'Missing' }</div><div class='k-sub'>Prediction engine</div></div>", unsafe_allow_html=True)
-    with k2:
-        st.markdown(f"<div class='kpi-card'><div class='k-label'>Accuracy</div><div class='k-value'>{report.get('Accuracy', '—')}</div><div class='k-sub'>Model performance</div></div>", unsafe_allow_html=True)
-    with k3:
-        st.markdown(f"<div class='kpi-card'><div class='k-label'>Positive recall</div><div class='k-value'>{report.get('Positive recall', '—')}</div><div class='k-sub'>Screening reliability</div></div>", unsafe_allow_html=True)
-    with k4:
-        st.markdown(f"<div class='kpi-card'><div class='k-label'>ROC-AUC</div><div class='k-value'>{report.get('ROC-AUC', '—')}</div><div class='k-sub'>Discrimination power</div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hero'><div class='h-title'>Asthma Risk Analysis</div><div class='h-sub'>Analyze patient health inputs, estimate asthma risk, and review the clinical factors contributing to the prediction.</div></div>", unsafe_allow_html=True)
     if model is None or preprocessor is None:
         st.error("Model or preprocessor artefacts are missing. Run: python models/train_model.py")
         return
@@ -669,7 +659,7 @@ def main() -> None:
     patient, submitted = build_inputs()
     render_aqi_explorer(aqi_df)
     if not submitted:
-        st.info("Enter the parameters, then press Predict asthma risk to show the full analysis. You can also load a demonstration profile to explore the interface.")
+        st.info("Enter the patient parameters, then press Predict asthma risk to show the analysis.")
         return
     if patient["LungFunctionFEV1"] > patient["LungFunctionFVC"]:
         st.error("FEV1 cannot exceed FVC. Correct the lung-function values before running an assessment.")
@@ -677,6 +667,8 @@ def main() -> None:
     patient_df = preprocess_input_data(patient)
     X_scaled = preprocessor.transform(patient_df)
     prob = float(model.predict_proba(X_scaled)[0][1])
+    decision_threshold = float(evaluation_results.get("model", {}).get("threshold", 0.5))
+    predicted_class = "Asthma prediction: Positive" if prob >= decision_threshold else "Asthma prediction: Negative"
     tier = risk_tier(prob)
     derived = compute_derived(patient)
     scaled_df = pd.DataFrame(X_scaled, columns=MODEL_FEATURE_COLUMNS)
@@ -685,7 +677,7 @@ def main() -> None:
     table_html = assessment_table_html(rows)
     st.markdown("<div class='section'><span class='s-num'>1</span><span class='s-title'>Risk Result</span><span class='s-caption'>Predicted outcome & summary</span></div>", unsafe_allow_html=True)
     cfg = RISK_CONFIG[tier]
-    st.markdown(f"<div class='risk-banner' style='background:{cfg['bg']};border-color:{cfg['border']};'><div class='rb-title' style='color:{cfg['color']}'>{tier} risk</div><div class='rb-sub' style='color:{cfg['color']}'>{prob * 100:.1f}% predicted probability · {recommendation(tier, derived)}</div></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='risk-banner' style='background:{cfg['bg']};border-color:{cfg['border']};'><div class='rb-title' style='color:{cfg['color']}'>{predicted_class}</div><div class='rb-sub' style='color:{cfg['color']}'>{prob * 100:.1f}% asthma probability · threshold {decision_threshold:.2f} · {tier} risk · {recommendation(tier, derived)}</div></div>", unsafe_allow_html=True)
     st.download_button(
         "Download assessment summary (CSV)",
         data=result_csv(patient, prob, tier, derived),
