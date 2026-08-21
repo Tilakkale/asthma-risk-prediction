@@ -176,84 +176,16 @@ Windows alternative:
 .\scripts\run_streamlit.ps1
 ```
 
-## Public Streamlit link
+## App preview and results
 
-No public Streamlit deployment link is configured in this repository. `localhost` and `http://<your-machine-ip>:8501` work only while the developer's machine is running the app; the latter is limited to the permitted local network.
+![Streamlit app preview](docs/screenshots/app-dashboard.png)
 
-To create a public link, push the repository to GitHub and deploy `app.py` through [Streamlit Community Cloud](https://share.streamlit.io/). It will provide an address in the form `https://<subdomain>.streamlit.app`. Do not publish this as a patient-facing service unless the model is first retrained, externally validated, clinically reviewed, and governed appropriately.
+The current model evaluation is available in [`models/evaluation_report.txt`](models/evaluation_report.txt), with plots and detailed results in the `models/` directory.
 
-## Commit and push to GitHub
-
-Review the changes before committing. Do not commit secrets, patient-identifying data, or local virtual-environment files.
+Run the application locally:
 
 ```powershell
-git status
-git diff -- README.md app.py preprocessing.py models/train_model.py models/evaluate_model.py
-git add README.md app.py preprocessing.py requirements.txt models docs scripts
-git commit -m "Add trustworthy asthma model evaluation"
-git branch --show-current
-git push origin <your-branch-name>
+streamlit run app.py
 ```
 
-If the GitHub repository has not been connected yet:
-
-```powershell
-git remote -v
-git remote add origin https://github.com/<your-username>/<your-repository>.git
-git branch -M main
-git push -u origin main
-```
-
-Do not use `git add .` blindly. Check `git status` first, especially because model binaries and generated plots can be large. The repository should remain marked **NOT VALIDATED** until the target labels are audited and an independent external dataset confirms performance.
-
-## App screenshots and video
-
-The repository currently includes the evaluation figure above, but no genuine Streamlit dashboard screenshot or demo video. Add real, non-identifying assets using these paths, then reference them here:
-
-```text
-docs/screenshots/app-dashboard.png
-docs/screenshots/risk-output.png
-docs/demo/app-demo.mp4
-```
-
-Use the following Markdown after adding those files:
-
-```md
-![App dashboard](docs/screenshots/app-dashboard.png)
-![Research output](docs/screenshots/risk-output.png)
-[Watch the application demo](docs/demo/app-demo.mp4)
-```
-
-## Required changes to improve recall
-
-1. **Audit labels and splits.** Verify the target definition, class mapping, duplicate handling, and whether the train/test split reflects the intended population.
-2. **Choose a threshold from validation data.** Keep the probability output and select a threshold against a stated recall/precision trade-off; do not use the current display-tier cut-offs as a classifier threshold.
-3. **Train for the intended objective.** Compare class weighting, SMOTE variants, and models using recall, precision-recall AUC, F1/F-beta, and calibration - not accuracy alone.
-4. **Use a separate validation set and external test set.** Avoid selecting a model or threshold on the final test split.
-5. **Report uncertainty and subgroup results.** Add confidence intervals, calibration plots, and results across relevant demographic groups.
-6. **Obtain clinical and governance review.** Validate with representative data before any workflow that affects care.
-
-## Current limitations
-
-- The current model fails its validation quality gate; forcing 100% hold-out recall produces 5.25% precision and flags 476 of 479 records.
-- The app uses a single structured assessment; it has no longitudinal history or real-time environmental exposure input.
-- AQI data is contextual and may not represent an individual's actual exposure.
-- The included data and evaluation do not establish clinical validity, calibration, fairness, or generalisability.
-- The coded ethnicity and education fields lack user-facing category definitions in the application.
-- There is no deployed public app URL.
-
-## Future work (not implemented)
-
-- Threshold selection and probability calibration on a validation dataset.
-- Temporal/longitudinal exacerbation prediction.
-- External validation, fairness analysis, and model monitoring.
-- Clinician-reviewed data dictionary and user-facing category labels.
-- Privacy, security, and governance controls required for real patient data.
-
-## Research scope
-
-This repository is relevant to Healthcare AI, Medical Informatics, Clinical Decision Support, Explainable AI, asthma and respiratory risk analysis, and environmental health. Its contribution is a transparent research prototype that combines a reproducible tabular ML workflow with an interactive visual interface and explicit performance limitations.
-
-## Author
-
-Author information has not been provided for this repository.
+This is a research prototype and is **not validated for diagnosis or clinical decision-making**.
