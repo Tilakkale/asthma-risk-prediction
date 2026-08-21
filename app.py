@@ -23,6 +23,7 @@ PREP_PATH = PROJECT_ROOT / "models" / "preprocessor.pkl"
 AQI_PATH = PROJECT_ROOT / "dataset" / "aqi.csv"
 REPORT_PATH = PROJECT_ROOT / "models" / "evaluation_report.txt"
 RESULTS_PATH = PROJECT_ROOT / "models" / "evaluation_results.json"
+METADATA_PATH = PROJECT_ROOT / "models" / "model_metadata.json"
 
 RISK_CONFIG = {
     "Low": dict(color="#34d399", bg="#ecfdf5", border="#86efac", threshold=0.35),
@@ -189,10 +190,13 @@ def load_report() -> dict:
 
 @st.cache_data
 def load_evaluation_results() -> dict:
-    if not RESULTS_PATH.exists():
+    if not RESULTS_PATH.exists() and not METADATA_PATH.exists():
         return {}
     try:
-        return json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
+        results = json.loads(RESULTS_PATH.read_text(encoding="utf-8")) if RESULTS_PATH.exists() else {}
+        metadata = json.loads(METADATA_PATH.read_text(encoding="utf-8")) if METADATA_PATH.exists() else {}
+        results["candidate_selection"] = metadata.get("candidate_selection", [])
+        return results
     except (OSError, json.JSONDecodeError):
         return {}
 
@@ -208,6 +212,7 @@ def render_research_results(results: dict) -> None:
         ranking = results.get("ranking_metrics", {})
         baseline = results.get("majority_baseline", {})
         calibration = results.get("calibration", {})
+        candidates = results.get("candidate_selection", [])
         st.markdown(f"**Validation status:** {status.get('status', 'Not available')}")
         metric_columns = st.columns(6)
         values = [
@@ -228,6 +233,21 @@ def render_research_results(results: dict) -> None:
             column.metric(label, display_value)
 
         st.caption("The saved evaluation uses a fixed stratified hold-out test set. Metrics are research results, not clinical validation.")
+        if candidates:
+            st.markdown("**Model comparison**")
+            comparison = pd.DataFrame([
+                {
+                    "Model": candidate.get("name", "Unknown"),
+                    "Validation PR-AUC": f"{float(candidate.get('average_precision', 0)) * 100:.2f}%",
+                    "Validation ROC-AUC": f"{float(candidate.get('roc_auc', 0)) * 100:.2f}%",
+                    "Threshold": f"{float(candidate.get('threshold', 0.5)):.2f}",
+                    "Precision": f"{float(candidate.get('operating_point', {}).get('precision', 0)) * 100:.2f}%",
+                    "Recall": f"{float(candidate.get('operating_point', {}).get('recall', 0)) * 100:.2f}%",
+                    "F1": f"{float(candidate.get('operating_point', {}).get('f1', 0)) * 100:.2f}%",
+                }
+                for candidate in candidates
+            ])
+            st.dataframe(comparison, hide_index=True, use_container_width=True)
         plot_columns = st.columns(3)
         plot_files = [
             ("ROC curve", "evaluation_roc_curve.png"),
@@ -644,30 +664,6 @@ def main() -> None:
     if model is None or preprocessor is None:
         st.error("Model or preprocessor artefacts are missing. Run: python models/train_model.py")
         return
-    # Show confusion matrix from evaluation report if available
-    if all(k in report for k in ("TN", "FP", "FN", "TP")):
-        tn, fp, fn, tp = int(report["TN"]), int(report["FP"]), int(report["FN"]), int(report["TP"])
-        total = tn + fp + fn + tp
-        st.markdown(f"""
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
-                <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase">True Negatives</div>
-                <div style="font-size:22px;font-weight:800;color:#166534">{tn}</div>
-            </div>
-            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
-                <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase">False Positives</div>
-                <div style="font-size:22px;font-weight:800;color:#991b1b">{fp}</div>
-            </div>
-            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
-                <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase">False Negatives</div>
-                <div style="font-size:22px;font-weight:800;color:#991b1b">{fn}</div>
-            </div>
-            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
-                <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase">True Positives</div>
-                <div style="font-size:22px;font-weight:800;color:#166534">{tp}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
     render_research_results(evaluation_results)
     input_toolbar()
     patient, submitted = build_inputs()
