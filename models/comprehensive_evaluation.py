@@ -156,6 +156,49 @@ results["model"] = {
 }
 
 # ──────────────────────────────────────────────
+# 4b. Model comparison image
+# ──────────────────────────────────────────────
+candidate_selection = metadata.get("candidate_selection", [])
+if candidate_selection:
+    candidate_names = [str(item.get("name", "Unknown")) for item in candidate_selection]
+    candidate_roc = [float(item.get("roc_auc", 0)) * 100 for item in candidate_selection]
+    candidate_pr = [float(item.get("average_precision", 0)) * 100 for item in candidate_selection]
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+    positions = np.arange(len(candidate_names))
+    width = 0.36
+    axes[0].bar(positions - width / 2, candidate_roc, width, label="ROC-AUC", color="#2563eb")
+    axes[0].bar(positions + width / 2, candidate_pr, width, label="PR-AUC", color="#059669")
+    axes[0].axhline(y=50, color="#64748b", linestyle="--", linewidth=1.2, label="Random ROC-AUC")
+    axes[0].axhline(y=float(y_trainval.mean()) * 100, color="#d97706", linestyle=":", linewidth=1.5, label="PR-AUC baseline")
+    axes[0].set_xticks(positions)
+    axes[0].set_xticklabels(candidate_names, rotation=18, ha="right")
+    axes[0].set_ylabel("Score (%)")
+    axes[0].set_title("Validation ranking metrics")
+    axes[0].set_ylim(0, 100)
+    axes[0].legend(fontsize=8)
+    axes[0].grid(axis="y", alpha=0.25)
+
+    accuracy_names = ["Majority baseline", model_name]
+    accuracy_values = [majority_acc * 100, acc * 100]
+    bars = axes[1].bar(accuracy_names, accuracy_values, color=["#94a3b8", "#0f766e"], width=0.55)
+    axes[1].set_ylabel("Accuracy (%)")
+    axes[1].set_title("Hold-out accuracy context")
+    axes[1].set_ylim(0, 100)
+    axes[1].grid(axis="y", alpha=0.25)
+    for bar, value in zip(bars, accuracy_values):
+        axes[1].text(bar.get_x() + bar.get_width() / 2, value + 2, f"{value:.2f}%", ha="center", fontweight="bold")
+
+    fig.suptitle("Model comparison", fontsize=15, fontweight="bold")
+    fig.tight_layout()
+    comparison_path = OUTPUT_DIR / "evaluation_model_comparison.png"
+    fig.savefig(comparison_path, dpi=140, bbox_inches="tight")
+    comparison_jpg_path = OUTPUT_DIR / "evaluation_model_comparison.jpg"
+    fig.savefig(comparison_jpg_path, dpi=140, bbox_inches="tight", format="jpg")
+    plt.close(fig)
+    print(f"  Saved model comparison → {comparison_jpg_path.name}")
+    results["model_comparison_image"] = comparison_jpg_path.name
+
+# ──────────────────────────────────────────────
 # 5. ROC-AUC + PR-AUC
 # ──────────────────────────────────────────────
 print("\n" + "─" * 70)

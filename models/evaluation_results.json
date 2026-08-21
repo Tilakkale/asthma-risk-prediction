@@ -19,6 +19,7 @@
       "TP": 4
     }
   },
+  "model_comparison_image": "evaluation_model_comparison.jpg",
   "ranking_metrics": {
     "roc_auc": 0.5020264317180617,
     "pr_auc": 0.07178179160085316

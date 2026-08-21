@@ -104,6 +104,8 @@ The current workflow keeps a final 20% test split separate from validation. The 
 
 ![Current hold-out confusion matrix](models/evaluation_confusion_matrix.png)
 
+![Model comparison](models/evaluation_model_comparison.jpg)
+
 ## Explainable AI and AQI
 
 For an entered profile, the app tries `shap.TreeExplainer` and then `shap.LinearExplainer` to display feature contributions. These values explain the saved model's behaviour for that input; they do not prove that a feature causes asthma.
